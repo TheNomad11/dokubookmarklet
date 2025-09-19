@@ -8,27 +8,27 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
     }
 
     public function handle_clip(Doku_Event $event, $param) {
-        global $INPUT, $ACT;
+        global $INPUT;
 
         if ($event->data !== 'clip') return;
 
-        // stop normal DokuWiki processing
+        // Stop normal processing
         $event->preventDefault();
         $event->stopPropagation();
 
-        // fetch parameters
-        $rawTitle = $INPUT->str('title', 'clipping_' . date('Ymd_His'));
-        $text     = $INPUT->str('text', '');
-        $url      = $INPUT->str('url', '');
+        // Fetch parameters
+        $rawTitle = $INPUT->post('title', 'clipping_' . date('Ymd_His'));
+        $text     = $INPUT->post('text', '');
+        $url      = $INPUT->post('url', '');
 
-        // sanitize page ID
+        // Sanitize page ID
         $idSafe = preg_replace('/[^\p{L}\p{N}_\-]/u', '_', $rawTitle);
         $idSafe = trim($idSafe);
         if ($idSafe === '') $idSafe = 'clipping_' . date('Ymd_His');
 
         $pageId = 'clippings:' . $idSafe;
 
-        // ensure unique page
+        // Ensure unique page
         $i = 1;
         $uniquePageId = $pageId;
         while (page_exists($uniquePageId)) {
@@ -37,23 +37,20 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
         }
         $pageId = $uniquePageId;
 
-        // prepare content
+        // Prepare content
         $now = date('Y-m-d H:i:s');
-        $content = "====== $rawTitle ======\n\n";   // page title as header
+        $content = "====== $rawTitle ======\n\n";
         $content .= "Source: $url\n\n";
         $content .= "$text\n\n";
         $content .= "Clipped: $now\n";
 
-        // save automatically
+        // Save automatically
         if (auth_quickaclcheck($pageId) >= AUTH_EDIT) {
             saveWikiText($pageId, $content, 'Clipped from web');
         }
 
-        // force view mode to prevent edit buttons
-        $ACT = 'show';
-
-        // redirect to the page view
-        header('Location: ' . wl($pageId));
+        // Redirect to page view (do=show)
+        header('Location: ' . wl($pageId, 'show'));
         exit;
     }
 }
