@@ -37,7 +37,11 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
         // prepare content
         $now = date('Y-m-d H:i:s');
-        $content = "Source: $url\n\n$text\n\nClipped: $now\n";
+        $content = "====== $rawTitle ======\n\n";   // Page title as header
+        $content .= "Source: $url\n\n";
+        $content .= "$text\n\n";
+        $content .= "Clipped: $now\n";
+
 
         // save the page
         if (auth_quickaclcheck($pageId) >= AUTH_EDIT) {
