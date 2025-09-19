@@ -12,11 +12,11 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
         if ($event->data !== 'clip') return;
 
-        // Stop normal processing
+        // Stop normal DokuWiki processing
         $event->preventDefault();
         $event->stopPropagation();
 
-        // Fetch parameters (works in older DokuWiki versions)
+        // Fetch parameters via GET (safe for latest DokuWiki)
         $rawTitle = $INPUT->str('title', 'clipping_' . date('Ymd_His'));
         $text     = $INPUT->str('text', '');
         $url      = $INPUT->str('url', '');
