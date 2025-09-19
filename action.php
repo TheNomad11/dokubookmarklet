@@ -49,8 +49,13 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
             saveWikiText($pageId, $content, $summary);
         }
 
-        // redirect to the newly created page
-        send_redirect(wl($pageId));
-        exit;
+        // tell DokuWiki that we handled the action and stop normal rendering
+$event->preventDefault();
+$event->stopPropagation();
+
+// redirect to the newly created page
+send_redirect(wl($pageId));
+exit;
+
     }
 }
