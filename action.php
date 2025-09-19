@@ -12,23 +12,22 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
         if ($event->data !== 'clip') return;
 
-        // Stop normal DokuWiki processing
         $event->preventDefault();
         $event->stopPropagation();
 
-        // Fetch parameters via GET (safe for latest DokuWiki)
+        // fetch parameters via GET (safe for latest DokuWiki)
         $rawTitle = $INPUT->str('title', 'clipping_' . date('Ymd_His'));
         $text     = $INPUT->str('text', '');
         $url      = $INPUT->str('url', '');
 
-        // Sanitize page ID
+        // sanitize page ID
         $idSafe = preg_replace('/[^\p{L}\p{N}_\-]/u', '_', $rawTitle);
         $idSafe = trim($idSafe);
         if ($idSafe === '') $idSafe = 'clipping_' . date('Ymd_His');
 
         $pageId = 'clippings:' . $idSafe;
 
-        // Ensure unique page
+        // ensure unique page
         $i = 1;
         $uniquePageId = $pageId;
         while (page_exists($uniquePageId)) {
@@ -37,19 +36,19 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
         }
         $pageId = $uniquePageId;
 
-        // Prepare content
+        // prepare content
         $now = date('Y-m-d H:i:s');
         $content = "====== $rawTitle ======\n\n";
         $content .= "Source: $url\n\n";
         $content .= "$text\n\n";
         $content .= "Clipped: $now\n";
 
-        // Save automatically
+        // save automatically
         if (auth_quickaclcheck($pageId) >= AUTH_EDIT) {
             saveWikiText($pageId, $content, 'Clipped from web');
         }
 
-        // Redirect to page view (do=show)
+        // redirect to a normal view page
         header('Location: ' . wl($pageId, 'show'));
         exit;
     }
