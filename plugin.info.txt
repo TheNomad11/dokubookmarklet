@@ -1,0 +1,7 @@
+base   clippings
+author Your Name
+email  you@example.com
+date   2025-09-19
+name   Clippings Plugin
+desc   Capture clippings via bookmarklet or direct URL params
+url    https://github.com/TheNomad11/dokubookmarklet
