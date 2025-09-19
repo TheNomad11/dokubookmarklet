@@ -4,16 +4,15 @@ if(!defined('DOKU_INC')) die();
 class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
     public function register(Doku_Event_Handler $controller) {
-        // intercept our custom action
         $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_clip');
     }
 
     public function handle_clip(Doku_Event $event, $param) {
-        global $INPUT;
+        global $INPUT, $ACT;
 
         if ($event->data !== 'clip') return;
 
-        // prevent DokuWiki from doing anything else
+        // stop normal DokuWiki processing
         $event->preventDefault();
         $event->stopPropagation();
 
@@ -29,7 +28,7 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
         $pageId = 'clippings:' . $idSafe;
 
-        // make unique if page exists
+        // ensure unique page
         $i = 1;
         $uniquePageId = $pageId;
         while (page_exists($uniquePageId)) {
@@ -50,7 +49,10 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
             saveWikiText($pageId, $content, 'Clipped from web');
         }
 
-        // redirect to the new page view and stop execution
+        // force view mode to prevent edit buttons
+        $ACT = 'show';
+
+        // redirect to the page view
         header('Location: ' . wl($pageId));
         exit;
     }
