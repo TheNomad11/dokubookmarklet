@@ -16,10 +16,10 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
         $event->preventDefault();
         $event->stopPropagation();
 
-        // Fetch parameters
-        $rawTitle = $INPUT->post('title', 'clipping_' . date('Ymd_His'));
-        $text     = $INPUT->post('text', '');
-        $url      = $INPUT->post('url', '');
+        // Fetch parameters (works in older DokuWiki versions)
+        $rawTitle = $INPUT->str('title', 'clipping_' . date('Ymd_His'));
+        $text     = $INPUT->str('text', '');
+        $url      = $INPUT->str('url', '');
 
         // Sanitize page ID
         $idSafe = preg_replace('/[^\p{L}\p{N}_\-]/u', '_', $rawTitle);
