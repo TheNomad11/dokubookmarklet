@@ -1,6 +1,6 @@
 base   clippings
-author Your Name
-email  you@example.com
+author TheNomad11
+email  thenomad11@basseba.de
 date   2025-09-19
 name   Clippings Plugin
 desc   Capture clippings via bookmarklet or direct URL params
