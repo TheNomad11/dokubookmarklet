@@ -4,15 +4,16 @@ if(!defined('DOKU_INC')) die();
 class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
     public function register(Doku_Event_Handler $controller) {
-        // Hook before any action is executed
-        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_clipping');
+        // intercept our custom action
+        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_clip');
     }
 
-    public function handle_clipping(Doku_Event $event, $param) {
+    public function handle_clip(Doku_Event $event, $param) {
         global $INPUT;
 
         if ($event->data !== 'clip') return;
 
+        // prevent DokuWiki from doing anything else
         $event->preventDefault();
         $event->stopPropagation();
 
@@ -21,41 +22,36 @@ class action_plugin_clippings extends DokuWiki_Action_Plugin {
         $text     = $INPUT->str('text', '');
         $url      = $INPUT->str('url', '');
 
-        // sanitize title to make valid page ID
-        $title = preg_replace('/[^\p{L}\p{N}_\-]/u', '_', $rawTitle);
-        $title = trim($title);
-        if ($title === '') $title = 'clipping_' . date('Ymd_His');
+        // sanitize page ID
+        $idSafe = preg_replace('/[^\p{L}\p{N}_\-]/u', '_', $rawTitle);
+        $idSafe = trim($idSafe);
+        if ($idSafe === '') $idSafe = 'clipping_' . date('Ymd_His');
 
-        $pageId = 'clippings:' . $title;
+        $pageId = 'clippings:' . $idSafe;
 
-        // ensure unique page
+        // make unique if page exists
         $i = 1;
-        while (page_exists($pageId)) {
-            $pageId = 'clippings:' . $title . '_' . $i;
+        $uniquePageId = $pageId;
+        while (page_exists($uniquePageId)) {
+            $uniquePageId = $pageId . '_' . $i;
             $i++;
         }
+        $pageId = $uniquePageId;
 
         // prepare content
         $now = date('Y-m-d H:i:s');
-        $content = "====== $rawTitle ======\n\n";   // Page title as header
+        $content = "====== $rawTitle ======\n\n";   // page title as header
         $content .= "Source: $url\n\n";
         $content .= "$text\n\n";
         $content .= "Clipped: $now\n";
 
-
-        // save the page
+        // save automatically
         if (auth_quickaclcheck($pageId) >= AUTH_EDIT) {
-            $summary = 'Clipped from web';
-            saveWikiText($pageId, $content, $summary);
+            saveWikiText($pageId, $content, 'Clipped from web');
         }
 
-        // tell DokuWiki that we handled the action and stop normal rendering
-$event->preventDefault();
-$event->stopPropagation();
-
-// redirect to the newly created page
-send_redirect(wl($pageId));
-exit;
-
+        // redirect to the new page view and stop execution
+        header('Location: ' . wl($pageId));
+        exit;
     }
 }
