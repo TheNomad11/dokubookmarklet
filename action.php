@@ -4,44 +4,49 @@ if(!defined('DOKU_INC')) die();
 class action_plugin_clippings extends DokuWiki_Action_Plugin {
 
     public function register(Doku_Event_Handler $controller) {
-        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_act');
-        $controller->register_hook('HTML_EDITFORM_OUTPUT', 'BEFORE', $this, 'inject_text');
+        // Hook before any action is executed
+        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_clipping');
     }
 
-    public function handle_act(Doku_Event $event, $param) {
+    public function handle_clipping(Doku_Event $event, $param) {
         global $INPUT;
 
-        if($event->data !== 'clipping') return;
+        if ($event->data !== 'clip') return;
 
         $event->preventDefault();
         $event->stopPropagation();
 
-        $title = $INPUT->str('title','clipping');
-        $url   = $INPUT->str('url','');
-        $text  = $INPUT->str('text','');
+        // fetch parameters
+        $rawTitle = $INPUT->str('title', 'clipping_' . date('Ymd_His'));
+        $text     = $INPUT->str('text', '');
+        $url      = $INPUT->str('url', '');
 
-        $id = 'clippings:'.preg_replace('/\W+/','_', $title);
+        // sanitize title to make valid page ID
+        $title = preg_replace('/[^\p{L}\p{N}_\-]/u', '_', $rawTitle);
+        $title = trim($title);
+        if ($title === '') $title = 'clipping_' . date('Ymd_His');
 
-        // store in session so we can inject into textarea
-        $_SESSION['clipping_prefill'] = "Source: $url\n\n$text";
+        $pageId = 'clippings:' . $title;
 
-        // redirect to edit page
-        send_redirect(wl($id, ['do'=>'edit']));
-    }
+        // ensure unique page
+        $i = 1;
+        while (page_exists($pageId)) {
+            $pageId = 'clippings:' . $title . '_' . $i;
+            $i++;
+        }
 
-    public function inject_text(Doku_Event $event, $param) {
-        if(empty($_SESSION['clipping_prefill'])) return;
+        // prepare content
+        $now = date('Y-m-d H:i:s');
+        $content = "Source: $url\n\n$text\n\nClipped: $now\n";
 
-        $prefill = $_SESSION['clipping_prefill'];
-        unset($_SESSION['clipping_prefill']); // only once
+        // save the page
+        if (auth_quickaclcheck($pageId) >= AUTH_EDIT) {
+            $summary = 'Clipped from web';
+            saveWikiText($pageId, $content, $summary);
+        }
 
-        $event->data = preg_replace_callback(
-            '#<textarea([^>]*name="wikitext"[^>]*)>(.*?)</textarea>#is',
-            function($m) use ($prefill){
-                return '<textarea'.$m[1].'>'.htmlspecialchars($prefill,ENT_QUOTES,'UTF-8').'</textarea>';
-            },
-            $event->data,
-            1
-        );
+        // redirect to the newly created page
+        send_redirect(wl($pageId));
+        exit;
     }
 }
